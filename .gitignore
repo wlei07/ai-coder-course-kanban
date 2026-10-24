@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+artifacts/
+.superpowers/
+.env*
+!.env.example
+*.tsbuildinfo
+.DS_Store
