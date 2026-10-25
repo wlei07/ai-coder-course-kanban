@@ -22,8 +22,7 @@ describe("Kanban board", () => {
   it("picks up a card with the keyboard and restores its position on Escape", async () => {
     const user = setup();
     const card = screen.getByRole("article", { name: "Map the customer journey" });
-    const handle = screen.getByRole("button", { name: "Move Map the customer journey" });
-    handle.focus();
+    card.focus();
     await user.keyboard("[Space]");
     await waitFor(() => expect(card).toHaveClass("is-dragging"));
     await user.keyboard("{Escape}");
@@ -44,7 +43,7 @@ describe("Kanban board", () => {
     });
     try {
       const user = setup();
-      screen.getByRole("button", { name: "Move Map the customer journey" }).focus();
+      screen.getByRole("article", { name: "Map the customer journey" }).focus();
       await user.keyboard("[Space]");
       await waitFor(() => expect(screen.getByRole("article", { name: "Map the customer journey" })).toHaveClass("is-dragging"));
       await user.keyboard("{ArrowRight}");
@@ -142,7 +141,7 @@ describe("Kanban board", () => {
     await user.clear(screen.getByLabelText("Column name"));
     await user.type(screen.getByLabelText("Column name"), "Ideas");
     await user.tab();
-    expect(screen.getByRole("button", { name: "Move Map the customer journey" })).toHaveFocus();
+    expect(screen.getByRole("article", { name: "Map the customer journey" })).toHaveFocus();
   });
 
   it.each(["{Escape}", "{Enter}"])("restores the old column name on cancel or blank input (%s)", async (key) => {

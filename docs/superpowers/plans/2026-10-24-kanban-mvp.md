@@ -30,13 +30,13 @@ The finished app will have one board, five renameable columns, draggable cards, 
 
 ## 3. Interface and interactions
 
-- [x] Build a compact header above five column panels. Use white cards, subtle borders and shadows, generous spacing, and clear typography.
+- [x] Build a compact header above five column panels. Use white cards, subtle borders and shadows, generous spacing, and clear typography. Give yellow and purple a prominent presence through a purple header with a yellow underline, warm yellow and lavender column panels, colored card edges, and purple add-card controls.
 - [x] Apply the specified palette: navy headings, purple submit buttons, blue focus and drag highlights, yellow accent lines, and gray supporting text. Use darker supporting text where necessary for readable contrast.
 - [x] Fit all columns across a wide desktop viewport. On smaller screens, preserve the board layout with horizontal scrolling and usable column widths.
 - [x] Give each column a card count and Add card button. The dialog contains labeled title/details fields, validation feedback, Cancel, and Add card actions.
 - [x] Preserve multiline details and wrap long text without breaking the layout.
 - [x] Support moving cards between columns, reordering within a column, and dropping into empty columns. Keep column positions fixed.
-- [x] Use a dedicated drag handle, visible drop feedback, keyboard dragging, touch support, and screen-reader announcements. Canceled drags and drops outside valid targets restore the original position.
+- [x] Make the entire card draggable, including its title, details, padding, and footer. Use a grab cursor and visible drop feedback. The delete button remains independently clickable and keyboard accessible without initiating a drag. Focus the card for keyboard dragging; press and hold anywhere on it for touch dragging. Preserve screen-reader announcements. Canceled drags and drops outside valid targets restore the original position.
 - [x] Provide visible focus states, dialog focus management, and reduced-motion support.
 
 **Success criteria:** Component tests cover creation, validation, cancellation, deletion, renaming, counts, and empty columns. Browser checks confirm usable pointer, keyboard, and touch interactions.
@@ -45,7 +45,7 @@ The finished app will have one board, five renameable columns, draggable cards, 
 
 - [x] Run Playwright against the production build in Chromium, Firefox, and WebKit.
 - [x] Test initial data; adding cards to each column; optional details; blank-title rejection; deletion; rename save/cancel; and reload resetting all changes.
-- [x] Test cross-column dragging, same-column reordering, empty destinations, canceled drags, and repeated moves without lost or duplicated cards.
+- [x] Test dragging from the title, details, padding, and footer; independent deletion by pointer and keyboard; cross-column dragging; same-column reordering; empty destinations; canceled drags; and repeated moves without lost or duplicated cards.
 - [x] Check desktop, tablet, and phone layouts, including horizontal scrolling and touch dragging.
 - [x] Inspect screenshots for spacing, contrast, long content, empty states, and dialogs. Fix defects and rerun affected checks.
 - [x] Require passing lint, TypeScript, unit/component tests, coverage, browser tests, and production build. Set component coverage minimums to 90% statements/lines/functions and 85% branches.
@@ -69,3 +69,12 @@ The finished app will have one board, five renameable columns, draggable cards, 
 - Independent review findings fixed: meaningful drag announcements and natural Tab focus after column renaming.
 - TypeScript 6 and ESLint 9 are the latest compatible majors for the installed Next.js lint dependencies.
 - Development server running at http://localhost:3000. Card creation and reset on reload were also checked against this server.
+
+## Full-card dragging and palette update (2026-10-25)
+
+- [x] Replace the small drag handle with the whole card as the pointer, touch, and keyboard drag surface. Keep deletion independent and preserve focus, cancellation, and announcements.
+- [x] Make yellow and purple more prominent in the header, column panels, card edges, board summary, and add-card controls. Inspect desktop and phone screenshots and verify text contrast with accessibility checks.
+- [x] Pass lint, TypeScript, production build, and all 35 unit/component tests. Coverage remains 100% statements, lines, and functions, with 98.48% branches.
+- [x] Pass 45 browser scenarios across Chromium, Firefox, phone, and tablet, including dragging from the title, details, padding, and footer.
+- [x] Pass all 21 WebKit scenarios after installing its host libraries. All 66 browser scenarios now pass across Chromium, Firefox, WebKit, phone, and tablet.
+- [x] Leave the development server running at http://localhost:3000 and verify an HTTP 200 response.

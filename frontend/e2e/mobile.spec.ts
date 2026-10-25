@@ -19,19 +19,23 @@ test("phone supports horizontal scrolling and creating a card", async ({ page },
 
 test("touch dragging moves a card to the adjacent column", async ({ page, context }) => {
   await page.goto("/");
-  const handle = page.getByRole("button", { name: "Move Map the customer journey", exact: true });
-  const from = (await handle.boundingBox())!;
+  const card = page.getByRole("article", { name: "Map the customer journey", exact: true });
+  const from = (await card.locator("h3").boundingBox())!;
   const x = from.x + from.width / 2;
   const y = from.y + from.height / 2;
+  const destination = page.getByRole("region", { name: "To do column" });
+  const to = (await destination.getByRole("article").first().boundingBox())!;
+  const targetX = Math.min(to.x + to.width / 2, page.viewportSize()!.width - 40);
+  const targetY = to.y + to.height / 2;
   const client = await context.newCDPSession(page);
   await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
   await expect(page.getByRole("article", { name: "Map the customer journey", exact: true })).toHaveClass(/is-dragging/);
-  // Keep touch input on the handle, where browser panning is intentionally disabled.
+  // Hold the card title to activate touch dragging, then move across columns.
   for (let step = 1; step <= 24; step++) {
-    await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + step * 11, y: y - step * 2 }] });
+    await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + (targetX - x) * step / 24, y: y + (targetY - y) * step / 24 }] });
   }
+  await expect(destination.getByRole("article", { name: "Map the customer journey", exact: true })).toHaveCount(1);
   await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  const destination = page.getByRole("region", { name: "To do column" });
   await expect(destination.getByRole("article", { name: "Map the customer journey", exact: true })).toHaveCount(1);
   await expect(destination.getByLabel("3 cards", { exact: true })).toHaveCount(1);
   await expect(page.getByRole("article")).toHaveCount(10);

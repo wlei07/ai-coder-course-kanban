@@ -5,19 +5,20 @@ const names = ["Backlog", "To do", "In progress", "In review", "Done"];
 const column = (page: Page, name: string) => page.getByRole("region", { name: `${name} column` });
 const browserErrors = new WeakMap<Page, string[]>();
 
-async function drag(page: Page, title: string, target: Locator, position = .5) {
-  const handle = page.getByRole("button", { name: `Move ${title}`, exact: true });
-  const from = (await handle.boundingBox())!;
+async function drag(page: Page, title: string, target: Locator, position = .5, source = page.getByRole("article", { name: title, exact: true }), sourcePosition?: { x: number; y: number }) {
+  const from = (await source.boundingBox())!;
   const to = (await target.boundingBox())!;
   const destination = await target.evaluate((element) => {
     const region = element.closest("section");
     const card = element.closest("article");
     return { name: region?.getAttribute("aria-label"), index: region && card ? Array.from(region.querySelectorAll("article")).indexOf(card) : -1 };
   });
-  const origin = await handle.evaluate((element) => element.closest("section")!.getAttribute("aria-label"));
-  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  const origin = await source.evaluate((element) => element.closest("section")!.getAttribute("aria-label"));
+  const x = from.x + (sourcePosition?.x ?? from.width / 2);
+  const y = from.y + (sourcePosition?.y ?? from.height / 2);
+  await page.mouse.move(x, y);
   await page.mouse.down();
-  await page.mouse.move(from.x + from.width / 2 + 12, from.y + from.height / 2, { steps: 4 });
+  await page.mouse.move(x + 12, y, { steps: 4 });
   await expect(page.getByRole("article", { name: title, exact: true })).toHaveClass(/is-dragging/);
   await page.mouse.move(to.x + to.width / 2, to.y + to.height * position, { steps: 25 });
   if (destination.name) {
@@ -120,6 +121,27 @@ test("moves a card between populated columns while preserving its details", asyn
   await expect(page.getByRole("article")).toHaveCount(10);
 });
 
+for (const area of ["title", "details", "padding", "footer"]) {
+  test(`drags a card from its ${area}`, async ({ page }) => {
+    const title = "Map the customer journey";
+    const card = page.getByRole("article", { name: title, exact: true });
+    const source = area === "title" ? card.locator("h3") : area === "details" ? card.locator("p") : area === "footer" ? card.locator(".card-actions") : card;
+    await drag(page, title, column(page, "To do").getByRole("article").first(), .5, source, area === "padding" ? { x: 5, y: 5 } : undefined);
+    await expect(column(page, "To do").getByRole("article", { name: title, exact: true })).toBeVisible();
+    await expect(column(page, "Backlog").getByRole("article", { name: title, exact: true })).toHaveCount(0);
+    await expect(page.getByRole("article")).toHaveCount(10);
+  });
+}
+
+test("deletes a card with the keyboard without starting a drag", async ({ page }) => {
+  const title = "Map the customer journey";
+  await page.getByRole("button", { name: `Delete ${title}`, exact: true }).focus();
+  await page.keyboard.press("Space");
+  await expect(page.getByRole("article", { name: title, exact: true })).toHaveCount(0);
+  await expect(page.getByRole("article")).toHaveCount(9);
+  await expect(page.locator(".is-dragging")).toHaveCount(0);
+});
+
 test("reorders cards within a column", async ({ page }) => {
   await drag(page, "Map the customer journey", column(page, "Backlog").getByRole("article").last(), .85);
   await expect(column(page, "Backlog").getByRole("heading", { level: 3 })).toHaveText(["Explore onboarding ideas", "Gather visual inspiration", "Map the customer journey"]);
@@ -135,8 +157,8 @@ test("deletes the last card, then drops a card into the empty column", async ({ 
 });
 
 test("cancels a drag with Escape without changing the board", async ({ page }) => {
-  const handle = page.getByRole("button", { name: "Move Map the customer journey", exact: true });
-  await handle.focus();
+  const card = page.getByRole("article", { name: "Map the customer journey", exact: true });
+  await card.focus();
   await page.keyboard.press("Space");
   await expect(page.getByRole("article", { name: "Map the customer journey", exact: true })).toHaveClass(/is-dragging/);
   await page.keyboard.press("ArrowRight");
@@ -147,7 +169,7 @@ test("cancels a drag with Escape without changing the board", async ({ page }) =
 });
 
 test("moves a card with the keyboard", async ({ page }) => {
-  await page.getByRole("button", { name: "Move Map the customer journey", exact: true }).focus();
+  await page.getByRole("article", { name: "Map the customer journey", exact: true }).focus();
   await page.keyboard.press("Space");
   await expect(page.getByRole("article", { name: "Map the customer journey", exact: true })).toHaveClass(/is-dragging/);
   await page.keyboard.press("ArrowRight");
@@ -163,7 +185,7 @@ test("announces a new card’s title and its renamed destination to screen reade
   await column(page, "Backlog").getByRole("button", { name: "Add card", exact: true }).click();
   await page.getByLabel("Title", { exact: true }).fill("My accessible card");
   await page.getByRole("dialog").getByRole("button", { name: "Add card", exact: true }).click();
-  await page.getByRole("button", { name: "Move My accessible card", exact: true }).focus();
+  await page.getByRole("article", { name: "My accessible card", exact: true }).focus();
   await page.keyboard.press("Space");
   const announcement = page.getByRole("status");
   await expect(announcement).toContainText("Picked up My accessible card in Backlog");
@@ -180,7 +202,7 @@ test("dropping outside the board restores the original position", async ({ page 
 });
 
 test("leaving the board after previewing a transfer restores both columns", async ({ page }) => {
-  const from = (await page.getByRole("button", { name: "Move Map the customer journey", exact: true }).boundingBox())!;
+  const from = (await page.getByRole("article", { name: "Map the customer journey", exact: true }).boundingBox())!;
   const to = (await column(page, "To do").getByRole("article").first().boundingBox())!;
   await page.mouse.move(from.x + 12, from.y + 12);
   await page.mouse.down();
@@ -198,7 +220,7 @@ test("leaving the board after previewing a transfer restores both columns", asyn
 test("moves a card into an empty column using the keyboard", async ({ page }) => {
   const done = column(page, "Done");
   await done.getByRole("button", { name: "Delete Kick things off", exact: true }).click({ force: true });
-  await page.getByRole("button", { name: "Move Review the prototype", exact: true }).focus();
+  await page.getByRole("article", { name: "Review the prototype", exact: true }).focus();
   await page.keyboard.press("Space");
   await expect(page.getByRole("article", { name: "Review the prototype", exact: true })).toHaveClass(/is-dragging/);
   await page.keyboard.press("ArrowRight");

@@ -37,7 +37,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-v8": "^5.0.5",
-    "eslint": "^9.39.5",
+    "eslint": "^10.13.0",
     "eslint-config-next": "^16.4.3",
     "happy-dom": "^21.0.4",
     "tailwindcss": "^4.3.3",
@@ -45,7 +45,21 @@
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
   },
+  "overrides": {
+    "eslint-plugin-import": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    }
+  },
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.13.0 || >=24.0.0"
+  },
+  "allowScripts": {
+    "unrs-resolver@1.12.2": true
   }
 }

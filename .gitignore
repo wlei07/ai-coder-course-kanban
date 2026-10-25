@@ -6,7 +6,6 @@ playwright-report/
 test-results/
 artifacts/
 .superpowers/
-.env*
-!.env.example
-*.tsbuildinfo
-.DS_Store
+.env
+.idea
+*.iml
